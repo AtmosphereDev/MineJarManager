@@ -108,8 +108,7 @@ final class VersionsDialog extends JDialog {
         if (r < 0 || !installBtn.isEnabled()) return;
         ModVersion v = versions.get(r);
         int ok = JOptionPane.showConfirmDialog(this,
-                "Replace " + entry.file.getName() + " with version " + v.versionNumber + "?\n"
-                        + "The old jar is moved to .plugin-manager-backup.",
+                "Replace " + entry.file.getName() + " with version " + v.versionNumber + "?",
                 "Install version", JOptionPane.OK_CANCEL_OPTION);
         if (ok != JOptionPane.OK_OPTION) return;
         dispose();

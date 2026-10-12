@@ -211,8 +211,7 @@ final class ModrinthApi {
     }
 
     /**
-     * Downloads {@code v}'s primary file next to the old jar, verifies it, backs up the old jar
-     * (into .plugin-manager-backup) and puts the new jar in place. Returns the new file.
+     * Downloads {@code v}'s primary file next to the old jar, verifies it, Returns the new file.
      */
     File install(ModVersion v, File oldJar, File folder, DoubleConsumer progress)
             throws IOException, InterruptedException {
