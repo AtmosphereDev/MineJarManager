@@ -15,6 +15,8 @@ dependencies {
     implementation("com.formdev:flatlaf:3.7.2")
     implementation("com.formdev:flatlaf-intellij-themes:3.7.2")
     implementation("com.formdev:flatlaf-extras:3.7.2")
+
+    implementation("com.twelvemonkeys.imageio:imageio-webp:3.12.0")
 }
 
 tasks.shadowJar {

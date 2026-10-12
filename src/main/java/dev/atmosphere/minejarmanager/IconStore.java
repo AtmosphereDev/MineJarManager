@@ -34,7 +34,7 @@ final class IconStore {
     Icon url(String url, String name, Runnable onLoaded) {
         return get(url, () -> {
             HttpResponse<byte[]> r = http.send(
-                    HttpRequest.newBuilder(URI.create(url)).header("User-Agent", "PluginManager/1.0").build(),
+                    HttpRequest.newBuilder(URI.create(url)).header("User-Agent", "MineJarManager/1.0").build(),
                     HttpResponse.BodyHandlers.ofByteArray());
             return r.statusCode() < 400 ? r.body() : null;
         }, name, onLoaded);
@@ -55,7 +55,7 @@ final class IconStore {
                     BufferedImage img = data == null ? null : javax.imageio.ImageIO.read(new ByteArrayInputStream(data));
                     if (img != null) ic = new ImageIcon(scale(img));
                 } catch (Exception ignored) {
-                    // unsupported format (webp/svg) or network error -> placeholder
+                    // unsupported format (svg) or network error -> placeholder
                 }
                 cache.put(key, ic != null ? ic : placeholder(name));
                 if (onLoaded != null) SwingUtilities.invokeLater(onLoaded);
