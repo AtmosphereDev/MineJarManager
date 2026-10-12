@@ -12,11 +12,9 @@ repositories {
 }
 
 dependencies {
-    implementation("com.formdev:flatlaf:3.5.4")
-    implementation("com.formdev:flatlaf-intellij-themes:3.5.4")
-    implementation("com.formdev:flatlaf-extras:3.5.4")
-
-    implementation("com.google.code.gson:gson:2.11.0")
+    implementation("com.formdev:flatlaf:3.7.2")
+    implementation("com.formdev:flatlaf-intellij-themes:3.7.2")
+    implementation("com.formdev:flatlaf-extras:3.7.2")
 }
 
 tasks.shadowJar {

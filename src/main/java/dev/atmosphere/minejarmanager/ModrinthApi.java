@@ -17,7 +17,7 @@ import java.util.function.DoubleConsumer;
 /** Thin client for the Modrinth v2 API. */
 final class ModrinthApi {
     static final String BASE = "https://api.modrinth.com/v2";
-    private static final String UA = "PluginManager/1.0 (Java Swing plugin manager)";
+    private static final String UA = "MineJarManager/1.0 (Java plugin manager)";
 
     private final HttpClient http = HttpClient.newBuilder()
             .followRedirects(HttpClient.Redirect.NORMAL)
@@ -223,10 +223,7 @@ final class ModrinthApi {
         download(f.url, part, f.sha512, progress);
         File target = new File(folder, safeName);
         if (oldJar != null && oldJar.exists()) {
-            File backupDir = new File(folder, ".plugin-manager-backup");
-            Files.createDirectories(backupDir.toPath());
-            File backup = new File(backupDir, oldJar.getName() + "." + System.currentTimeMillis() + ".bak");
-            Files.move(oldJar.toPath(), backup.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            Files.deleteIfExists(oldJar.toPath());
         }
         Files.move(part.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
         return target;

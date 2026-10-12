@@ -1,6 +1,7 @@
 package dev.atmosphere.minejarmanager;
 
 import com.formdev.flatlaf.intellijthemes.FlatDarkFlatIJTheme;
+import com.formdev.flatlaf.util.SystemFileChooser;
 import com.formdev.flatlaf.util.SystemInfo;
 
 import javax.swing.*;
@@ -57,11 +58,11 @@ public final class PluginManagerApp extends JFrame {
     private final JComboBox<String> loaderBox = new JComboBox<>(LOADERS.keySet().toArray(new String[0]));
     private final JComboBox<String> mcBox = new JComboBox<>(new String[]{"Any"});
     private final JButton scanBtn = new JButton("Scan & check updates");
-    private final JButton downloadBtn = new JButton("Download plugins");
+    private final JButton downloadBtn = new JButton("Download");
     private final JButton versionsBtn = new JButton("Change version");
     private final JButton updateBtn = new JButton("Update selected");
     private final JButton updateAllBtn = new JButton("Update all");
-    private final JLabel statusLabel = new JLabel("Choose a plugins folder and press Scan.");
+    private final JLabel statusLabel = new JLabel("Choose a folder and press Scan.");
     private final JProgressBar progress = new JProgressBar(0, 100);
     private boolean busy;
 
@@ -75,10 +76,10 @@ public final class PluginManagerApp extends JFrame {
         JButton browse = new JButton("Browse");
         browse.addActionListener(e -> chooseFolder());
         mcBox.setEditable(true);
-        mcBox.setPrototypeDisplayValue("1.21.11-pre-release");
+        mcBox.setPrototypeDisplayValue("1.21.11");
 
-        JPanel row1 = new JPanel(new BorderLayout(6, 0));
-        row1.add(new JLabel("Plugins folder:"), BorderLayout.WEST);
+        JPanel row1 = new JPanel(new BorderLayout(8, 0));
+        row1.add(new JLabel("Folder:"), BorderLayout.WEST);
         row1.add(folderField, BorderLayout.CENTER);
         row1.add(browse, BorderLayout.EAST);
 
@@ -378,7 +379,12 @@ public final class PluginManagerApp extends JFrame {
     // ------------------------------------------------------------------ prefs
 
     private void loadPrefs() {
-        String def = new File("plugins").isDirectory() ? new File("plugins").getAbsolutePath() : "";
+        String def = "";
+        if (new File("mods").isDirectory()) {
+            def = new File("mods").getAbsolutePath();
+        } else if (new File("plugins").isDirectory()) {
+            def = new File("plugins").getAbsolutePath();
+        }
         folderField.setText(prefs.get("folder", def));
         loaderBox.setSelectedItem(prefs.get("loader", "Paper"));
         mcBox.setSelectedItem(prefs.get("mc", "Any"));
@@ -409,10 +415,14 @@ public final class PluginManagerApp extends JFrame {
     }
 
     private void chooseFolder() {
-        JFileChooser fc = new JFileChooser(folderField.getText().trim().isEmpty() ? null : new File(folderField.getText().trim()));
-        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        fc.setDialogTitle("Select the plugins (or mods) folder");
-        if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+        String text = folderField.getText().trim();
+        File initialDir = text.isEmpty() ? null : new File(text);
+
+        SystemFileChooser fc = new SystemFileChooser(initialDir);
+        fc.setFileSelectionMode(SystemFileChooser.DIRECTORIES_ONLY);
+        fc.setDialogTitle("Select the plugins or mods folder");
+
+        if (fc.showOpenDialog(this) == SystemFileChooser.APPROVE_OPTION) {
             folderField.setText(fc.getSelectedFile().getAbsolutePath());
             startScan();
         }
@@ -431,7 +441,7 @@ public final class PluginManagerApp extends JFrame {
     private File folderOrWarn() {
         File folder = new File(folderField.getText().trim());
         if (!folder.isDirectory()) {
-            JOptionPane.showMessageDialog(this, "Please select a valid plugins folder first.", "No folder", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please select a valid folder first.", "No folder", JOptionPane.WARNING_MESSAGE);
             return null;
         }
         return folder;
@@ -475,7 +485,7 @@ public final class PluginManagerApp extends JFrame {
                 if (out.isEmpty()) return res;
 
                 try {
-                    publish("Identifying plugins on Modrinth…");
+                    publish("Identifying jars on Modrinth...");
                     setProgress(55);
                     List<String> hashes = new ArrayList<>();
                     for (PluginEntry e : out) hashes.add(e.sha512);
@@ -490,11 +500,11 @@ public final class PluginManagerApp extends JFrame {
                         }
                     }
 
-                    publish("Fetching project details…");
+                    publish("Fetching project details...");
                     setProgress(70);
                     Map<String, Project> projects = projectIds.isEmpty() ? Map.of() : api.projects(projectIds);
 
-                    publish("Checking for updates…");
+                    publish("Checking for updates...");
                     setProgress(85);
                     Map<String, ModVersion> latest = known.isEmpty() ? Map.of() : api.latest(known, loaders, mc);
                     for (PluginEntry e : out) {
@@ -530,8 +540,8 @@ public final class PluginManagerApp extends JFrame {
                     long unk = res.entries.stream().filter(e -> e.status == PluginEntry.Status.UNKNOWN).count();
                     long off = res.entries.stream().filter(e -> !e.enabled).count();
                     statusLabel.setText(res.networkError != null
-                            ? res.entries.size() + " plugin(s) listed, but Modrinth could not be reached: " + res.networkError
-                            : res.entries.size() + " plugin(s), " + off + " disabled, " + upd + " update(s) available, "
+                            ? res.entries.size() + " jar(s) listed, but Modrinth could not be reached: " + res.networkError
+                            : res.entries.size() + " jar(s), " + off + " disabled, " + upd + " update(s) available, "
                             + unk + " not found on Modrinth.");
                 } catch (Exception ex) {
                     Throwable t = ex.getCause() != null ? ex.getCause() : ex;
@@ -561,7 +571,7 @@ public final class PluginManagerApp extends JFrame {
         PluginEntry e = selectedEntry();
         if (e == null) return;
         if (!e.onModrinth()) {
-            JOptionPane.showMessageDialog(this, "This plugin was not found on Modrinth, so no versions are available.");
+            JOptionPane.showMessageDialog(this, "This jar was not found on Modrinth, so no versions are available.");
             return;
         }
         new VersionsDialog(this, api, e, loaders(), gameVersion(),
@@ -582,7 +592,7 @@ public final class PluginManagerApp extends JFrame {
             JOptionPane.showMessageDialog(this, "Everything is up to date.");
             return;
         }
-        int ok = JOptionPane.showConfirmDialog(this, "Update " + jobs.size() + " plugin(s)?\nOld jars are moved to .plugin-manager-backup.",
+        int ok = JOptionPane.showConfirmDialog(this, "Update " + jobs.size(),
                 "Update all", JOptionPane.OK_CANCEL_OPTION);
         if (ok == JOptionPane.OK_OPTION) install(jobs);
     }
@@ -663,7 +673,7 @@ public final class PluginManagerApp extends JFrame {
         JPopupMenu m = new JPopupMenu();
         JMenuItem tog = new JMenuItem(p.enabled ? "Disable" : "Enable");
         tog.addActionListener(a -> toggle(p, !p.enabled));
-        JMenuItem ver = new JMenuItem("Change version…");
+        JMenuItem ver = new JMenuItem("Change version...");
         ver.setEnabled(p.onModrinth());
         ver.addActionListener(a -> changeVersion());
         JMenuItem web = new JMenuItem("Open on Modrinth");
@@ -684,11 +694,9 @@ public final class PluginManagerApp extends JFrame {
     public static void main(String[] args) {
         System.setProperty("flatlaf.menuBarEmbedded", "true");
         if(SystemInfo.isLinux) {
-            // enable custom window decorations
             JFrame.setDefaultLookAndFeelDecorated(true);
             JDialog.setDefaultLookAndFeelDecorated(true);
         }
-//        Theme.apply();
         FlatDarkFlatIJTheme.setup();
         SwingUtilities.invokeLater(() -> new PluginManagerApp().setVisible(true));
     }
